@@ -1,0 +1,153 @@
+/**
+ * This ruleset enforces a strict user-ownership security model for the StudyWise application.
+ *
+ * Core Philosophy:
+ * The security model is built on the principle that users own and control their own data. All data,
+ * including subjects, tasks, and timetables, is private and accessible only to the authenticated
+ * user who created it. There is no concept of public data or cross-user visibility.
+ *
+ * Data Structure:
+ * All application data is hierarchically organized under the `/users/{userId}` path. This structure
+ * inherently links every piece of data to a specific user, making authorization checks simple,
+ * performant, and secure by leveraging the document path itself for ownership verification.
+ *
+ * Key Security Decisions:
+ * - Strict Ownership: All operations (read, write, delete) are restricted to the document owner,
+ *   identified by the `{userId}` wildcard in the path.
+ * - No Public Listing: Listing users from the top-level `/users` collection is explicitly disallowed
+ *   to protect user privacy and prevent data scraping.
+ * - Path-Based Security: Authorization relies on matching the authenticated user's ID (`request.auth.uid`)
+ *   with the `{userId}` in the document path. This avoids costly and slow `get()` calls to other
+ *   documents for permission checks.
+ * - Relational Integrity: On document creation, rules ensure that internal `userId` fields match the
+ *   `{userId}` from the path, creating a secure and consistent link between the data and its owner.
+ *   These relational keys are enforced as immutable on update.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions for Reusable Logic
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Checks if the requesting user is the owner of the data based on the path.
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks for ownership on an existing document, critical for safe updates and deletes.
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user profile documents.
+     * @path /users/{userId}
+     * @allow A user (auth.uid='user123') can (create) their own profile at `/users/user123`.
+     * @deny An anonymous user cannot (get) any user profile. A user cannot (list) all users.
+     * @principle A user can create and manage their own profile, but cannot see or list others.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user-specific subjects.
+     * @path /users/{userId}/subjects/{subjectId}
+     * @allow A user (auth.uid='user123') can (create) a subject under `/users/user123/subjects`.
+     * @deny A user (auth.uid='user456') cannot (get) a subject from `/users/user123/subjects`.
+     * @principle Restricts all access to a user's own data tree, ensuring privacy.
+     */
+    match /users/{userId}/subjects/{subjectId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user-specific tasks.
+     * @path /users/{userId}/tasks/{taskId}
+     * @allow A user (auth.uid='user123') can (list) all tasks under `/users/user123/tasks`.
+     * @deny A user (auth.uid='user456') cannot (update) a task at `/users/user123/tasks/taskABC`.
+     * @principle Restricts all access to a user's own data tree, ensuring privacy.
+     */
+    match /users/{userId}/tasks/{taskId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) 
+                      && request.resource.data.userId == userId
+                      && request.resource.data.createdAt == request.time;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user-specific timetables.
+     * @path /users/{userId}/timetables/{timetableId}
+     * @allow A user (auth.uid='user123') can (delete) their own timetable.
+     * @deny An anonymous user cannot (get) any timetable.
+     * @principle Restricts all access to a user's own data tree, ensuring privacy.
+     */
+    match /users/{userId}/timetables/{timetableId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages study sessions for a user.
+     * @path /users/{userId}/studySessions/{studySessionId}
+     * @allow A user (auth.uid='user123') can (create) a session in their own collection.
+     * @deny A user (auth.uid='user456') cannot (list) sessions from another user's collection.
+     * @principle Enforces ownership and validates relational integrity to the user.
+     */
+     match /users/{userId}/studySessions/{studySessionId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user-specific study streaks.
+     * @path /users/{userId}/streaks/{streakId}
+     * @allow A user (auth.uid='user123') can (update) their own streak document.
+     * @deny A user (auth.uid='user456') cannot (create) a streak for another user.
+     * @principle Restricts all access to a user's own data tree, ensuring privacy.
+     */
+    match /users/{userId}/streaks/{streakId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages user-specific notifications.
+     * @path /users/{userId}/notifications/{notificationId}
+     * @allow A user (auth.uid='user123') can (get) their own notifications.
+     * @deny A user (auth.uid='user456') cannot (delete) another user's notification.
+     * @principle Restricts all access to a user's own data tree, ensuring privacy.
+     */
+    match /users/{userId}/notifications/{notificationId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
+    

@@ -1,0 +1,452 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the StudyWise application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL of the user's profile photo.",
+          "format": "uri"
+        },
+        "studyPreferences": {
+          "type": "array",
+          "description": "User study preferences",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "email"
+      ]
+    },
+    "Subject": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subject",
+      "type": "object",
+      "description": "Represents a subject or course.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Subject entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Subject)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the subject."
+        },
+        "color": {
+          "type": "string",
+          "description": "Color associated with the subject (e.g., for UI)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task or assignment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Task)"
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Reference to Subject. (Relationship: Subject 1:N Task)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the task."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date of the task.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation date of the task.",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority level of the task.",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates if the task is completed."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "subjectId",
+        "title",
+        "dueDate",
+        "priority",
+        "completed",
+        "createdAt"
+      ]
+    },
+    "Timetable": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Timetable",
+      "type": "object",
+      "description": "Represents a study timetable.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Timetable entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Timetable)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the timetable (e.g., 'Fall 2024')."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Start date of the timetable.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "End date of the timetable.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "StudySession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudySession",
+      "type": "object",
+      "description": "Represents a single study session within a timetable.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StudySession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N StudySession)"
+        },
+        "timetableId": {
+          "type": "string",
+          "description": "Reference to Timetable. (Relationship: Timetable 1:N StudySession)"
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to Task. (Relationship: Task 1:N StudySession)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "Start time of the study session.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "End time of the study session.",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of the study session in minutes."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Indicates if the study session was completed."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "taskId",
+        "startTime",
+        "endTime",
+        "duration",
+        "completed"
+      ]
+    },
+    "Streak": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Streak",
+      "type": "object",
+      "description": "Represents a user's study streak.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Streak entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Streak)"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Start date of the current streak.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "End date of the current streak.",
+          "format": "date-time"
+        },
+        "days": {
+          "type": "number",
+          "description": "Number of days in the current streak."
+        },
+        "longestStreak": {
+          "type": "number",
+          "description": "Users longest streak in days."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "startDate",
+        "days",
+        "longestStreak"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification for the user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Notification entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Notification)"
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to Task. (Relationship: Task 1:N Notification)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the notification was created.",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "Content of the notification."
+        },
+        "type": {
+          "type": "string",
+          "description": "Notification type (e.g., 'reminder', 'deadline')."
+        },
+        "read": {
+          "type": "boolean",
+          "description": "Indicates if the notification has been read."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "message",
+        "type",
+        "read"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Each document is keyed by the user's unique ID. This path is used to store private User data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/subjects/{subjectId}",
+        "definition": {
+          "entityName": "Subject",
+          "schema": {
+            "$ref": "#/backend/entities/Subject"
+          },
+          "description": "Stores subjects owned by a user. (User 1:N Subject)",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "subjectId",
+              "description": "The unique ID of the subject."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks owned by a user. (User 1:N Task)",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique ID of the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/timetables/{timetableId}",
+        "definition": {
+          "entityName": "Timetable",
+          "schema": {
+            "$ref": "#/backend/entities/Timetable"
+          },
+          "description": "Stores timetables owned by a user. (User 1:N Timetable)",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "timetableId",
+              "description": "The unique ID of the timetable."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/studySessions/{studySessionId}",
+        "definition": {
+          "entityName": "StudySession",
+          "schema": {
+            "$ref": "#/backend/entities/StudySession"
+          },
+          "description": "Stores study sessions for a user. (User 1:N StudySession)",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "studySessionId",
+              "description": "The unique ID of the study session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/streaks/{streakId}",
+        "definition": {
+          "entityName": "Streak",
+          "schema": {
+            "$ref": "#/backend/entities/Streak"
+          },
+          "description": "Stores study streaks for a user. (User 1:N Streak)",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "streakId",
+              "description": "The unique ID of the streak."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores notifications for a user. (User 1:N Notification)",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            },
+            {
+              "name": "notificationId",
+              "description": "The unique ID of the notification."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the StudyWise application's features, focusing on user-owned data and collaborative access where needed. It uses path-based ownership for entities directly associated with users (Subjects, Tasks, Timetables, Streaks, Notifications) to simplify security rules and maintain clear ownership.  Subcollections are used to manage hierarchical data, like StudySessions within Timetables.  Authorization Independence is achieved by using path-based ownership `/users/{userId}/{collection}/{documentId}`. This removes the need for `get()` calls in security rules, because authorization is implicit in the path itself.  All `list` operations are secured due to path-based ownership (QAPs).  This structure facilitates secure and scalable data management for the application's core features."
+  }
+}
